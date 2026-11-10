@@ -1,139 +1,50 @@
-# Disstributed File Management System.
+# Distributed File Management System.
 
 A private place for students to keep their documents: notes, assignments, certificates. 
-
-You sign up, upload your files, and get them back whenever you need them. Nobody else can see them. Not other users, and not someone who guesses a URL.
-
-
 ---
+Distributed File Management System
+Users can:
+- Register and authenticate securely.
+- Upload files of different formats.
+- Download and access their files.
+- Organize files into folders.
+- Share files with other users.
+- Track storage usage.
+- Access files even when requests are handled by different application servers.
 
-## Why I built this
-
-Student documents end up scattered across WhatsApp chats, email drafts, and random Drive folders. I wanted one simple place that's actually private.
-
-I also wanted to build something that looks like a real backend, not a tutorial CRUD app. That meant proper auth, encrypted storage, and handling the bugs you only hit once something is deployed.
-
----
-
-## What it does
-
-- **Sign up / log in** with JWT-based authentication
-- **Upload and download** your documents
-- **Encrypted at rest.** Files are encrypted with Fernet before they reach storage
-- **Locked to your account.** Every file request is checked against its owner, so changing an ID in a URL won't show you someone else's file (IDOR protection)
-- **Profile picture** support
-- **Database migrations** handled with Alembic
-
----
-
+ 
 ## Built with
+A Full Python Fastapi Backend with Async , Pydantic , SqlAlchemy , Alembic Migration.
+________________________________________________________________________________________
 
+Distributed Architecture , Docker , AWS Cloud Deployment , CI/CD.
 | Part | Tech |
 |---|---|
-| Backend | FastAPI, async SQLAlchemy |
-| Database | Supabase Postgres |
-| File storage | Supabase Storage |
-| Encryption | Fernet (`cryptography`) |
-| Auth | JWT |
-| Migrations | Alembic |
-| Frontend   | Javascript |
-|
+| Backend      | FastAPI (Python) |
+| Frontend     | JavaScript |
+| Database     | PostgreSQL |
+| Caching      | Redis |
+| File storage | AWS S3 |
+
+
+
 
 ---
 
-## How it fits together
+## Distributed system architecture
 
-```
-Frontend  ──►  FastAPI backend  ──►  Supabase Postgres   (users, file metadata)
-                    │
-                    └──────────────►  Supabase Storage    (encrypted file blobs)
-```
-
-1. The frontend sends a request with a JWT.
-2. The backend checks who you are, then checks that the file actually belongs to you.
-3. On upload, the file is encrypted before being stored. On download, it's decrypted on the way out.
-
-Only metadata lives in Postgres. The files themselves live in Storage, and they're already encrypted by the time they get there.
-
----
-
-## Things that broke (and what I did about them)
-
-Stuff that works on localhost and falls over in production is where I learned the most.
-
-- **Files kept disappearing on Render.** Render's filesystem is ephemeral, so anything saved to disk vanished on redeploy. I moved file storage to Supabase Storage.
-- **Couldn't connect to the database from Render.** My Supabase project (Mumbai region) was reachable over IPv6 only, and Render couldn't reach it. Switching to Supabase's transaction pooler (port 6543) fixed it. That also meant setting `statement_cache_size=0` for asyncpg, because the pooler doesn't support prepared statements.
-- **Users could only upload one file.** A stray `unique=True` on `student_id` in the uploads table was limiting everyone to a single file. Removing it (and migrating) fixed it.
-- **Profile picture lookup crashed** with a `MultipleResultsFound` error once a user had more than one matching row. I fixed the query so it picks the right record.
-
----
-
-## Running it locally
-
-You'll need Python 3.10+ and a Supabase project (free tier is fine).
-
-```bash
-# 1. Clone
-git clone https://github.com/hm-ritik/Space_File.git
-cd Space_File
-
-# 2. Backend
-cd backend
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+```mermaid
+flowchart TD
+    A["Client / Frontend<br/>Upload · Download · Access · Share"] --> B["Load Balancer / API Gateway<br/>Routes incoming requests"]
+    B --> C1["API Server 1<br/>Docker container"]
+    B --> C2["API Server 2<br/>Docker container"]
+    C1 & C2 --> D[("PostgreSQL<br/>File metadata, users, permissions")]
+    C1 & C2 --> E[("AWS S3<br/>Actual file storage")]
+    C1 & C2 --> F["Redis<br/>Caching and coordination"]
+    C1 & C2 --> G["Background Worker<br/>File processing tasks"]
 ```
 
-Create a `.env` file in `backend/`:
-
-```env
-DATABASE_URL=postgresql+asyncpg://...      # Supabase pooler URL
-SUPABASE_URL=...
-SUPABASE_KEY=...
-SECRET_KEY=...                             # used to sign JWTs
-FERNET_KEY=...                             # used to encrypt files
-```
-
-Generate a Fernet key with:
-
-```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
-
-Then run migrations and start the server:
-
-```bash
-alembic upgrade head
-uvicorn main:app --reload
-```
-
-And in another terminal, the frontend:
-
-```bash
-cd frontend
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-> ⚠️ Keep your `FERNET_KEY` safe. If you lose it, every file you've encrypted is unrecoverable.
-
----
-
-## Project structure
-
-```
-Space_File/
-├── backend/      # FastAPI app: routes, models, auth, encryption
-├── frontend/     # UI
-└── .gitignore
-```
-
----
-
-## What's next
-
-- Move the backend to AWS EC2 (nginx + uvicorn on Ubuntu) instead of relying on Render
-- Keep tightening the frontend
+*Multiple instances of the same application run behind the load balancer.*
 
 ---
 
