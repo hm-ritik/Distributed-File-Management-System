@@ -1,4 +1,4 @@
-# Space File
+# Disstributed File Management System.
 
 A private place for students to keep their documents: notes, assignments, certificates. 
 
@@ -37,6 +37,7 @@ I also wanted to build something that looks like a real backend, not a tutorial 
 | Auth | JWT |
 | Migrations | Alembic |
 | Frontend   | Javascript |
+|
 
 ---
 
@@ -138,4 +139,4 @@ Space_File/
 
 ## About me
 
-I'm Ritik, a final-year CS student. Space File is my main portfolio project, so feedback, bug reports, and "why did you do it this way?" questions are all welcome. Open an issue, or find me on [GitHub](https://github.com/hm-ritik).
+I'm Ritik, a final-year CS student.Distributed File Management System is my main resume project, so feedback, bug reports, and "why did you do it this way?" questions are all welcome. Open an issue, or find me on [GitHub](https://github.com/hm-ritik).
