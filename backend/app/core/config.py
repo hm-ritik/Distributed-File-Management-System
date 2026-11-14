@@ -5,10 +5,11 @@ class Settings(BaseSettings):
     DATABASE_URL:str
     REDIS_URL: str = "redis://redis:6379/0"
     SECRET_KEY:str
-    ENCRYPTION_KEY:str
-    SUPABASE_URL:str
-    SUPABASE_SERVICE_KEY:str
-    SUPABASE_BUCKET:str="file-storage"
+   
+    AWS_ACCESS_KEY_ID:str
+    AWS_SECRET_ACCESS_KEY:str
+    AWS_REGION:str
+    S3_BUCKET_NAME:str
 
 
     ALGORITHM:str="HS256"
