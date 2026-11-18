@@ -32,25 +32,15 @@ class S3Storage(StorageBase):
             error_code = exc.response["Error"]["Code"]
 
             if error_code in ("404", "NoSuchKey", "NotFound"):
-                raise HTTPException(
-                    status_code=404,
-                    detail="File missing from storage",
-                )
-
+                raise HTTPException(status_code=404,detail="File missing from storage",)
             raise
 
     def delete(self, key: str) -> None:
-        self.client.delete_object(
-            Bucket=self.bucket,
-            Key=key,
-        )
+        self.client.delete_object(Bucket=self.bucket,Key=key,)
 
     def exists(self, key: str) -> bool:
         try:
-            self.client.head_object(
-                Bucket=self.bucket,
-                Key=key,
-            )
+            self.client.head_object(Bucket=self.bucket, Key=key)
             return True
 
         except ClientError as exc:

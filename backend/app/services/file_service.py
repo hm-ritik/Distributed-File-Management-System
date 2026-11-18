@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from uuid import uuid4
 
@@ -31,19 +30,12 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 def _detect_and_validate(content: bytes, allowed_types: set) -> str:
     kind = filetype.guess(content)
-
     if kind is None:
         raise HTTPException(status_code=400, detail="Invalid file.")
-
     if kind.mime not in allowed_types:
         raise HTTPException(status_code=400, detail="File type not allowed.")
-
     if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=413,
-            detail="File size should not exceed 5 MB.",
-        )
-
+        raise HTTPException(status_code=413,detail="File size should not exceed 5 MB.")
     return kind.mime
 
 
@@ -120,10 +112,10 @@ async def upload_user_file(profile: UploadFile,category: str,db: AsyncSession,cu
     count = await repo.count_files_by_category( db, current_user.id, category,)
 
     if category.lower() == "photo" and count >= 10:
-        raise HTTPException(status_code=400,detail="Maximum 10 photos allowed.",)
+        raise HTTPException(status_code=400, detail="Maximum 10 photos allowed.",)
 
     if category.lower() == "document" and count >= 10:
-        raise HTTPException(status_code=400,detail="Maximum 10 documents allowed.",)
+        raise HTTPException(status_code=400, detail="Maximum 10 documents allowed.",)
 
     extension = Path(profile.filename or "").suffix
     stored_name = f"{uuid4()}{extension}"
@@ -203,14 +195,10 @@ async def download_file_content(file_id: int,db: AsyncSession,current_user: Stud
         file.file_path,
     )
 
-    return Response(
-        content=content,
-        media_type=file.content_type,
-        headers={
+    return Response(content=content,media_type=file.content_type,headers={
             "Content-Disposition": f'attachment; filename="{file.filename}"'
         },
     )
-
 
 async def get_all_user_files(db: AsyncSession,current_user: Student,):
     return await repo.get_all_files_by_student(db, current_user.id)

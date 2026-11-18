@@ -5,16 +5,15 @@ from sqlalchemy import text
 from app.routes.students_routes import router as student_router
 from app.routes.file_route import router as file_router
 from app.core.database import engine
-
-
-
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.middlewares.rate_limiter import limiter
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.connect() as conn:
         await conn.execute(text("SELECT 1"))
-
     app.state.redis = await create_redis_client()
 
     try:
@@ -38,6 +37,8 @@ app.add_middleware(
 
 app.include_router(student_router, prefix="/students", tags=["Students"])
 app.include_router(file_router, prefix="/files", tags=["Files"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded,_rate_limit_exceeded_handler)
 
 
 @app.get("/home")

@@ -2,11 +2,13 @@ from app.repository.student_repository import login_student , register_student
 from app.schemas.student_schema import Register , Login 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.students_model import Student
-from fastapi import HTTPException
+from fastapi import HTTPException , Request
 from app.core.security import hash_password , verify_password
 from app.repository.student_repository import register_student , check_email , login_student ,update_password
 from app.core.dependencies import create_access_token
 from app.schemas.student_schema import ChangePassword
+from app.core.redis import create_redis_client
+
 
 
 """ name:str = Field(min_length=2 , max_length=25)
@@ -38,10 +40,7 @@ async def register_user(post:Register , db:AsyncSession , current_user:Student):
 async def login_user(post:Login , db:AsyncSession):
     existing= await login_student( db ,post.email )
     if existing:
-        if not verify_password(
-            post.password,
-            existing.hashed_password
-        ):
+        if not verify_password(post.password, existing.hashed_password):
             raise HTTPException(status_code=404 , detail="User Not Found")
         token=create_access_token({"sub":post.email})
         return {"access_token": token,"token_type": "bearer"}
@@ -57,11 +56,9 @@ async def change_password(post: ChangePassword,db: AsyncSession,current_user: St
     current_user.hashed_password = hash_password(post.new_password)
     await update_password(db, current_user)
 
-    return {
-        "message": "Password updated successfully."
-    }
+    return {"message": "Password updated successfully."}
 
-async def get_current_user_details(current_user: Student):
+async def get_current_user_details(request:Request ,current_user: Student):
     return current_user
         
 
