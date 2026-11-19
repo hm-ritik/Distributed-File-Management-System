@@ -1,13 +1,9 @@
-
 from botocore.exceptions import ClientError
 from fastapi import HTTPException
-
 from app.core.config import settings
 from app.storage.base import StorageBase
 
 import boto3
-
-
 class S3Storage(StorageBase):
 
     def __init__(self):
@@ -30,7 +26,6 @@ class S3Storage(StorageBase):
 
         except ClientError as exc:
             error_code = exc.response["Error"]["Code"]
-
             if error_code in ("404", "NoSuchKey", "NotFound"):
                 raise HTTPException(status_code=404,detail="File missing from storage",)
             raise
