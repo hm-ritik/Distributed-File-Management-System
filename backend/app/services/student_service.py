@@ -49,6 +49,8 @@ async def login_user(post:Login , db:AsyncSession):
 async def change_password(post: ChangePassword,db: AsyncSession,current_user: Student):
     if not verify_password(post.current_password,current_user.hashed_password):
         raise HTTPException(status_code=400,detail="Current password is incorrect.")
+    if current_user.is_demo:
+        raise HTTPException(status_code=403,detail="Password changes are disabled for demo accounts.")
 
     if post.current_password == post.new_password:
         raise HTTPException(status_code=400,detail="New password must be different.")
